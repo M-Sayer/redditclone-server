@@ -1,4 +1,4 @@
-import { Resolver, Mutation, InputType, Field, Arg, Ctx, ObjectType } from "type-graphql";
+import { Resolver, Mutation, InputType, Field, Arg, Ctx, ObjectType, Query } from "type-graphql";
 import { MyContext } from "src/types";
 import { User } from "../entities/User";
 import argon2 from 'argon2';
@@ -34,11 +34,22 @@ class UserResponse {
 //user resolver, similar to REST route
 @Resolver()
 export class UserResolver {
+  @Query(() => User, { nullable: true })
+  async me(
+    @Ctx() { em, req }: MyContext
+  ) {
+    //you are not logged in
+    if (!req.session.userId) { return null }
+
+    const user = await em.findOne(User, { id: req.session.userId });
+    return user
+  }
+
   @Mutation(() => UserResponse)
   //reigster endpoint
   async register(
     @Arg('options') options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse>{
     if (options.username.length <= 1) {
       return {
@@ -69,7 +80,8 @@ export class UserResolver {
       await em.persistAndFlush(user);
     } catch (error) {
       //duplicate username error
-      if (error.code === '23505' || error.detail.includes('already exists')) {
+      // || error.detail.includes('already exists'
+      if (error.code === '23505') {
         return {
           errors: [
             {
@@ -81,6 +93,10 @@ export class UserResolver {
       }
       console.log(error)
     }
+
+    //store user id session to log them in
+    //sets cookies and keeps them logged in
+    req.session.userId = user.id;
 
     return { user };
   }
