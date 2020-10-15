@@ -3,6 +3,7 @@ import { MyContext } from "src/types";
 import { User } from "../entities/User";
 import argon2 from 'argon2';
 import { EntityManager } from '@mikro-orm/postgresql';
+import { COOKIE_NAME } from '../constants';
 
 //input fields
 @InputType()
@@ -40,10 +41,10 @@ export class UserResolver {
     @Ctx() { em, req }: MyContext
   ) {
     //you are not logged in
-    if (!req.session.userId) { return null }
+    if (!req.session.userId) return null;
 
     const user = await em.findOne(User, { id: req.session.userId });
-    return user
+    return user;
   }
 
   @Mutation(() => UserResponse)
@@ -100,9 +101,8 @@ export class UserResolver {
               message: 'that username is already taken',
             },
           ],
-        }
+        };
       }
-      console.log(error)
     }
 
     //store user id session to log them in
@@ -118,15 +118,15 @@ export class UserResolver {
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> { 
     //make this tolowercase
-    const user = await em.findOne(User, { username: options.username })
+    const user = await em.findOne(User, { username: options.username });
     if (!user) {
       return {
         errors: [
           { 
             field: 'username',
             message: "that username doesn't exist"
-        },
-      ],
+          },
+        ],
       };
     }
 
@@ -144,6 +144,22 @@ export class UserResolver {
 
     req.session.userId = user.id;
 
-    return { user }
+    return { user };
+  }
+
+  @Mutation(() => Boolean)
+  logout(@Ctx() { req, res }: MyContext) {
+    return new Promise(resolve =>
+      req.session.destroy(err => {
+        res.clearCookie(COOKIE_NAME);
+        if (err) {
+          console.log(err);
+          resolve(false);
+          return;
+        }
+
+        resolve(true);
+      })
+    );
   }
 }
