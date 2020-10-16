@@ -9,7 +9,8 @@ import {
   UseMiddleware, 
   Int,
   FieldResolver,
-  Root
+  Root,
+  ObjectType
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
@@ -24,6 +25,14 @@ class PostInput {
   text: string
 }
 
+@ObjectType()
+class PaginatedPosts {
+  @Field(() => [Post])
+  posts: Post[]
+  @Field()
+  hasMore: boolean
+}
+
 @Resolver(Post)
 export class PostResolver {
   @FieldResolver(() => String) 
@@ -32,23 +41,28 @@ export class PostResolver {
   }
 
   //get posts
-  @Query(() => [Post])
+  @Query(() => PaginatedPosts)
   async posts(
     @Arg('limit', () => Int) limit: number,
     @Arg('cursor', () => String, { nullable: true }) cursor: string | null
-  ): Promise<Post[]> {
+  ): Promise<PaginatedPosts> {
     const maxLimit = Math.min(50, limit);
     const query = getConnection()
       .getRepository(Post)
       .createQueryBuilder('p')      
       .orderBy('"createdAt"', 'DESC')
-      .take(maxLimit);
+      .take(maxLimit + 1); // check if there are more posts than requested
 
     if (cursor) query.where('"createdAt" < :cursor', { 
       cursor: new Date(parseInt(cursor)) 
     });
 
-    return query.getMany()
+    const posts = await query.getMany();
+
+    return { 
+      posts: posts.slice(0, maxLimit), // remove extra post if there is one
+      hasMore: posts.length === maxLimit + 1,
+    }
 
   }
   //get post
