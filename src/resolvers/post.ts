@@ -11,7 +11,7 @@ import {
   FieldResolver,
   Root
 } from "type-graphql";
-import { getConnection, QueryBuilder } from "typeorm";
+import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types";
