@@ -6,8 +6,10 @@ import {
   Mutation, 
   InputType, 
   Field, 
-  UseMiddleware 
+  UseMiddleware, 
+  Int
 } from "type-graphql";
+import { getConnection, QueryBuilder } from "typeorm";
 import { Post } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types";
@@ -24,8 +26,23 @@ class PostInput {
 export class PostResolver {
   //get posts
   @Query(() => [Post])
-  async posts(): Promise<Post[]> {
-    return Post.find();
+  async posts(
+    @Arg('limit', () => Int) limit: number,
+    @Arg('cursor', () => String, { nullable: true }) cursor: string | null
+  ): Promise<Post[]> {
+    const maxLimit = Math.min(50, limit);
+    const query = getConnection()
+      .getRepository(Post)
+      .createQueryBuilder('p')      
+      .orderBy('"createdAt"', 'DESC')
+      .take(maxLimit);
+
+    if (cursor) query.where('"createdAt" < :cursor', { 
+      cursor: new Date(parseInt(cursor)) 
+    });
+
+    return query.getMany()
+
   }
   //get post
   @Query(() => Post, { nullable: true })
