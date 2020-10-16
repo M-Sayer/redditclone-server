@@ -35,7 +35,7 @@ const main = async () => {
       origin: 'http://localhost:3000',
       credentials: true,
     }) 
-  )
+  );
 
   app.use(
     session({
@@ -54,15 +54,15 @@ const main = async () => {
       secret: 'secretString',
       resave: false,
     })
-  )
+  );
 
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolver, PostResolver, UserResolver ],
+      resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res, }) => ({ req, res, redis })
+    context: ({ req, res }) => ({ req, res, redis }),
   });
 
   apolloServer.applyMiddleware({ app, cors: false });
