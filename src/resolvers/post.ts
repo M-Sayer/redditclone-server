@@ -47,17 +47,35 @@ export class PostResolver {
     @Arg('cursor', () => String, { nullable: true }) cursor: string | null
   ): Promise<PaginatedPosts> {
     const maxLimit = Math.min(50, limit);
-    const query = getConnection()
-      .getRepository(Post)
-      .createQueryBuilder('p')      
-      .orderBy('"createdAt"', 'DESC')
-      .take(maxLimit + 1); // check if there are more posts than requested
+    const replacements: any[] = [maxLimit + 1];
 
-    if (cursor) query.where('"createdAt" < :cursor', { 
-      cursor: new Date(parseInt(cursor)) 
-    });
+    if (cursor) replacements.push(new Date(parseInt(cursor)));
 
-    const posts = await query.getMany();
+    const posts = await getConnection().query(`
+      select p.*, 
+      json_build_object(
+        'id', u.id,
+        'username', u.username
+      ) author
+      from post p
+      inner join users u on p."authorId" = u.id
+      ${cursor ? `where p."createdAt" < $2` : ''}
+      order by p."createdAt" DESC
+      limit $1
+    `, replacements);
+
+    // const query = getConnection()
+    //   .getRepository(Post)
+    //   .createQueryBuilder('p')  
+    //   .innerJoinAndSelect('p.author', 'u', 'u.id = p."authorId"')    
+    //   .orderBy('"createdAt"', 'DESC')
+    //   .take(maxLimit + 1); // check if there are more posts than requested
+
+    // if (cursor) query.where('"createdAt" < :cursor', { 
+    //   cursor: new Date(parseInt(cursor)) 
+    // });
+
+    // const posts = await query.getMany();
 
     return { 
       posts: posts.slice(0, maxLimit), // remove extra post if there is one

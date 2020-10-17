@@ -59,16 +59,21 @@ let PostResolver = class PostResolver {
     posts(limit, cursor) {
         return __awaiter(this, void 0, void 0, function* () {
             const maxLimit = Math.min(50, limit);
-            const query = typeorm_1.getConnection()
-                .getRepository(Post_1.Post)
-                .createQueryBuilder('p')
-                .orderBy('"createdAt"', 'DESC')
-                .take(maxLimit + 1);
+            const replacements = [maxLimit + 1];
             if (cursor)
-                query.where('"createdAt" < :cursor', {
-                    cursor: new Date(parseInt(cursor))
-                });
-            const posts = yield query.getMany();
+                replacements.push(new Date(parseInt(cursor)));
+            const posts = yield typeorm_1.getConnection().query(`
+      select p.*, 
+      json_build_object(
+        'id', u.id,
+        'username', u.username
+      ) author
+      from post p
+      inner join users u on p."authorId" = u.id
+      ${cursor ? `where p."createdAt" < $2` : ''}
+      order by p."createdAt" DESC
+      limit $1
+    `, replacements);
             return {
                 posts: posts.slice(0, maxLimit),
                 hasMore: posts.length === maxLimit + 1,

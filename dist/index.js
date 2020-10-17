@@ -26,18 +26,16 @@ const connect_redis_1 = __importDefault(require("connect-redis"));
 const cors_1 = __importDefault(require("cors"));
 const typeorm_1 = require("typeorm");
 const Post_1 = require("./entities/Post");
-const User_1 = require("./entities/User");
+const Users_1 = require("./entities/Users");
 const path_1 = __importDefault(require("path"));
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const conn = yield typeorm_1.createConnection({
         type: 'postgres',
-        database: 'redditclone',
-        username: 'postgres',
-        password: 'postgres',
+        database: 'roaddit',
         logging: true,
         synchronize: true,
         migrations: [path_1.default.join(__dirname, './migrations/*')],
-        entities: [Post_1.Post, User_1.User]
+        entities: [Post_1.Post, Users_1.Users]
     });
     yield conn.runMigrations();
     const app = express_1.default();

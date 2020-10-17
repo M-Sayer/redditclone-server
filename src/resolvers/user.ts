@@ -1,6 +1,6 @@
 import { Resolver, Mutation, Field, Arg, Ctx, ObjectType, Query } from "type-graphql";
 import { MyContext } from "../types";
-import { User } from "../entities/User";
+import { Users } from "../entities/Users";
 import argon2 from 'argon2';
 import { COOKIE_NAME, FORGOT_PASSWORD } from '../constants';
 import { UsernamePasswordInput } from "./UsernamePasswordInput";
@@ -24,8 +24,8 @@ class UserResponse {
   @Field(() => [FieldError], { nullable: true})
   errors?: FieldError[];
 
-  @Field(() => User, { nullable: true })
-  user?: User;
+  @Field(() => Users, { nullable: true })
+  user?: Users;
 }
 
 //user resolver, similar to REST route
@@ -74,7 +74,7 @@ async changePassword(
     }
   }
   
-  await User.update(
+  await Users.update(
     { id: uid },
     { password: await argon2.hash(newPassword)} 
   );
@@ -92,7 +92,7 @@ async changePassword(
     @Arg('email') email: string,
     @Ctx() { redis } : MyContext
   ) {
-    const user = await User.findOne({ where: { email } });
+    const user = await Users.findOne({ where: { email } });
     if (!user) return true;
 
     const token = v4();
@@ -110,14 +110,14 @@ async changePassword(
     return true;
   }
 
-  @Query(() => User, { nullable: true })
+  @Query(() => Users, { nullable: true })
   me(
     @Ctx() { req }: MyContext
   ) {
     //you are not logged in
     if (!req.session.userId) return null;
 
-    return User.findOne(req.session.userId);
+    return Users.findOne(req.session.userId);
   }
 
   @Mutation(() => UserResponse)
@@ -134,7 +134,7 @@ async changePassword(
 
     try {
       const result = await getConnection().createQueryBuilder()
-        .insert().into(User).values({
+        .insert().into(Users).values({
           username: options.username, 
           password: hashedPassword,
           email: options.email,
@@ -181,7 +181,7 @@ async changePassword(
     @Ctx() { req }: MyContext
   ): Promise<UserResponse> { 
     //make this tolowercase
-    const user = await User.findOne(
+    const user = await Users.findOne(
       usernameOrEmail.includes('@') 
         ? { where: { email: usernameOrEmail } }
         : { where: { username: usernameOrEmail } }

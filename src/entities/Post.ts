@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn, 
   UpdateDateColumn, 
 } from "typeorm";
-import { User } from "./User";
+import { Users } from "./Users";
 
 @ObjectType()
 @Entity()
@@ -33,8 +33,9 @@ export class Post extends BaseEntity{
   @Column()
   authorId: number;
 
-  @ManyToOne(() => User, user => user.posts)
-  author: User;
+  @Field()
+  @ManyToOne(() => Users, users => users.posts)
+  author: Users;
 
   @Field(() => String)
   @CreateDateColumn()

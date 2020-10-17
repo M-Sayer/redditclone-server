@@ -12,24 +12,23 @@ import connectRedis from 'connect-redis';
 import cors from 'cors';
 import { createConnection } from 'typeorm';
 import { Post } from './entities/Post';
-import { User } from './entities/User';
+import { Users } from './entities/Users';
 import path from 'path';
 
 const main = async () => {
   const conn = await createConnection({
     type: 'postgres',
-    database: 'redditclone',
-    username: 'postgres',
-    password: 'postgres',
+    database: 'roaddit',
     logging: true,
     synchronize: true,
     migrations: [path.join(__dirname, './migrations/*')],
-    entities: [Post, User]
+    entities: [Post, Users]
   });
 
   await conn.runMigrations();
 
   // await Post.delete({})
+  // await User.delete({});
 
   const app = express();
 

@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
 const type_graphql_1 = require("type-graphql");
-const User_1 = require("../entities/User");
+const Users_1 = require("../entities/Users");
 const argon2_1 = __importDefault(require("argon2"));
 const constants_1 = require("../constants");
 const UsernamePasswordInput_1 = require("./UsernamePasswordInput");
@@ -54,8 +54,8 @@ __decorate([
     __metadata("design:type", Array)
 ], UserResponse.prototype, "errors", void 0);
 __decorate([
-    type_graphql_1.Field(() => User_1.User, { nullable: true }),
-    __metadata("design:type", User_1.User)
+    type_graphql_1.Field(() => Users_1.Users, { nullable: true }),
+    __metadata("design:type", Users_1.Users)
 ], UserResponse.prototype, "user", void 0);
 UserResponse = __decorate([
     type_graphql_1.ObjectType()
@@ -86,7 +86,7 @@ let UserResolver = class UserResolver {
                 };
             }
             const uid = parseInt(userId);
-            const user = yield User_1.User.findOne(uid);
+            const user = yield User.findOne(uid);
             if (!user) {
                 return {
                     errors: [
@@ -97,7 +97,7 @@ let UserResolver = class UserResolver {
                     ],
                 };
             }
-            yield User_1.User.update({ id: uid }, { password: yield argon2_1.default.hash(newPassword) });
+            yield Users_1.Users.update({ id: uid }, { password: yield argon2_1.default.hash(newPassword) });
             yield redis.del(key);
             req.session.userId = user.id;
             return { user };
@@ -105,7 +105,7 @@ let UserResolver = class UserResolver {
     }
     forgotPassword(email, { redis }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield User_1.User.findOne({ where: { email } });
+            const user = yield Users_1.Users.findOne({ where: { email } });
             if (!user)
                 return true;
             const token = uuid_1.v4();
@@ -117,7 +117,7 @@ let UserResolver = class UserResolver {
     me({ req }) {
         if (!req.session.userId)
             return null;
-        return User_1.User.findOne(req.session.userId);
+        return Users_1.Users.findOne(req.session.userId);
     }
     register(options, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -128,7 +128,7 @@ let UserResolver = class UserResolver {
             let user;
             try {
                 const result = yield typeorm_1.getConnection().createQueryBuilder()
-                    .insert().into(User_1.User).values({
+                    .insert().into(Users_1.Users).values({
                     username: options.username,
                     password: hashedPassword,
                     email: options.email,
@@ -165,7 +165,7 @@ let UserResolver = class UserResolver {
     }
     login(usernameOrEmail, password, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield User_1.User.findOne(usernameOrEmail.includes('@')
+            const user = yield Users_1.Users.findOne(usernameOrEmail.includes('@')
                 ? { where: { email: usernameOrEmail } }
                 : { where: { username: usernameOrEmail } });
             if (!user) {
@@ -223,7 +223,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "forgotPassword", null);
 __decorate([
-    type_graphql_1.Query(() => User_1.User, { nullable: true }),
+    type_graphql_1.Query(() => Users_1.Users, { nullable: true }),
     __param(0, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
