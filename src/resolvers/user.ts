@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Field, Arg, Ctx, ObjectType, Query } from "type-graphql";
+import { Resolver, Mutation, Field, Arg, Ctx, ObjectType, Query, FieldResolver, Root } from "type-graphql";
 import { MyContext } from "../types";
 import { Users } from "../entities/Users";
 import argon2 from 'argon2';
@@ -29,8 +29,16 @@ class UserResponse {
 }
 
 //user resolver, similar to REST route
-@Resolver()
+@Resolver(Users)
 export class UserResolver {
+
+// @FieldResolver(() => String)
+// email(@Root() user: Users, @Ctx() { req }: MyContext) {
+//   if (req.session.userId === user.id) {
+//     return user.email
+//   } return ''
+// }
+
 @Mutation(() => UserResponse)
 async changePassword(
   @Arg('token') token: string,
@@ -61,7 +69,7 @@ async changePassword(
     };
   }
   const uid = parseInt(userId);
-  const user = await User.findOne(uid);
+  const user = await Users.findOne(uid);
   
   if (!user) {
     return {
@@ -111,9 +119,7 @@ async changePassword(
   }
 
   @Query(() => Users, { nullable: true })
-  me(
-    @Ctx() { req }: MyContext
-  ) {
+  me(@Ctx() { req }: MyContext) {
     //you are not logged in
     if (!req.session.userId) return null;
 

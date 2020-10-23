@@ -86,7 +86,7 @@ let UserResolver = class UserResolver {
                 };
             }
             const uid = parseInt(userId);
-            const user = yield User.findOne(uid);
+            const user = yield Users_1.Users.findOne(uid);
             if (!user) {
                 return {
                     errors: [
@@ -254,7 +254,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UserResolver.prototype, "logout", null);
 UserResolver = __decorate([
-    type_graphql_1.Resolver()
+    type_graphql_1.Resolver(Users_1.Users)
 ], UserResolver);
 exports.UserResolver = UserResolver;
 //# sourceMappingURL=user.js.map
