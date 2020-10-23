@@ -1,3 +1,4 @@
+import { Vote } from "../entities/Vote";
 import { 
   Resolver, 
   Query, 
@@ -38,6 +39,30 @@ export class PostResolver {
   @FieldResolver(() => String) 
   textSnippet(@Root() root: Post) {
     return root.text.slice(0, 50);
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async vote(
+    @Arg('postId', () => Int) postId: number,
+    @Arg('value', () => Int) value: number,
+    @Ctx() { req }: MyContext 
+  ) {
+    const userId = req.session.userId;
+    
+    if (value > 1 || value < -1) return false;
+
+    await getConnection().query(`
+      start transaction;
+      insert into vote ("userId", "postId", value) 
+      values (${userId}, ${postId}, ${value});
+      update post
+      set points = points + ${value}
+      where id = ${postId};
+      commit;
+    `);
+
+    return true;
   }
 
   //get posts
@@ -95,7 +120,6 @@ export class PostResolver {
     @Arg('input') input: PostInput,
     @Ctx() { req }: MyContext
   ): Promise<Post> {
-    console.log('req id: ', req.session.userId)
     return Post.create({
       ...input,
       authorId: req.session.userId,

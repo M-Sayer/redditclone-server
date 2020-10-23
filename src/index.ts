@@ -14,6 +14,7 @@ import { createConnection } from 'typeorm';
 import { Post } from './entities/Post';
 import { Users } from './entities/Users';
 import path from 'path';
+import { Vote } from './entities/Vote';
 
 const main = async () => {
   const conn = await createConnection({
@@ -22,7 +23,7 @@ const main = async () => {
     logging: true,
     synchronize: true,
     migrations: [path.join(__dirname, './migrations/*')],
-    entities: [Post, Users]
+    entities: [Post, Users, Vote]
   });
 
   await conn.runMigrations();

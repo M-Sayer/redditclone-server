@@ -56,6 +56,23 @@ let PostResolver = class PostResolver {
     textSnippet(root) {
         return root.text.slice(0, 50);
     }
+    vote(postId, value, { req }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const userId = req.session.userId;
+            if (value > 1 || value < -1)
+                return false;
+            yield typeorm_1.getConnection().query(`
+      start transaction;
+      insert into vote ("userId", "postId", value) 
+      values (${userId}, ${postId}, ${value});
+      update post
+      set points = points + ${value}
+      where id = ${postId};
+      commit;
+    `);
+            return true;
+        });
+    }
     posts(limit, cursor) {
         return __awaiter(this, void 0, void 0, function* () {
             const maxLimit = Math.min(50, limit);
@@ -85,7 +102,6 @@ let PostResolver = class PostResolver {
     }
     createPost(input, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('req id: ', req.session.userId);
             return Post_1.Post.create(Object.assign(Object.assign({}, input), { authorId: req.session.userId })).save();
         });
     }
@@ -114,6 +130,16 @@ __decorate([
     __metadata("design:paramtypes", [Post_1.Post]),
     __metadata("design:returntype", void 0)
 ], PostResolver.prototype, "textSnippet", null);
+__decorate([
+    type_graphql_1.Mutation(() => Boolean),
+    type_graphql_1.UseMiddleware(isAuth_1.isAuth),
+    __param(0, type_graphql_1.Arg('postId', () => type_graphql_1.Int)),
+    __param(1, type_graphql_1.Arg('value', () => type_graphql_1.Int)),
+    __param(2, type_graphql_1.Ctx()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, Object]),
+    __metadata("design:returntype", Promise)
+], PostResolver.prototype, "vote", null);
 __decorate([
     type_graphql_1.Query(() => PaginatedPosts),
     __param(0, type_graphql_1.Arg('limit', () => type_graphql_1.Int)),
